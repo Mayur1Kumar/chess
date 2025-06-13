@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unbeatable Chess AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* Solid black background */
+            color: #ffffff; /* White text for overall page */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* Landscape orientation for mobile devices */
+        @media (orientation: portrait) and (max-width: 768px) {
+            body {
+                /* Prompt user to rotate device, or subtly encourage landscape */
+                flex-direction: column; /* Default for portrait */
+            }
+            .orientation-message {
+                display: block; /* Show message in portrait */
+                text-align: center;
+                margin-top: 20px;
+                color: #e53e3e;
+                font-weight: bold;
+            }
+             .chess-board, .control-panel {
+                transform: scale(0.8); /* Slightly shrink if portrait and narrow to try and fit */
+                margin: 0 auto; /* Center scaled content */
+            }
+        }
+
+        @media (orientation: landscape) and (max-width: 768px) {
+            body {
+                /* In landscape, we might want to put things side-by-side or optimize space differently */
+                justify-content: space-around; /* Distribute space vertically */
+                flex-direction: row; /* Arrange main content side-by-side */
+                align-items: center;
+                padding: 10px; /* Reduced padding for more space */
+            }
+            .orientation-message {
+                display: none; /* Hide message in landscape */
+            }
+            .game-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                flex-grow: 1; /* Allow it to take available horizontal space */
+                max-width: 70%; /* Limit the container width in landscape to leave space for controls */
+            }
+            .chess-board {
+                width: clamp(250px, calc(90vmin - 20px), 550px); /* Slightly adjust clamp for landscape */
+                height: clamp(250px, calc(90vmin - 20px), 550px);
+                margin-bottom: 10px; /* Adjust margin for landscape layout */
+            }
+            .control-panel {
+                flex-direction: column; /* Stack controls vertically on the side */
+                justify-content: flex-start; /* Align controls to the top of their column */
+                align-items: flex-end; /* Align items to the right within their column */
+                margin-top: 0;
+                margin-left: 20px; /* Space between board container and controls */
+                flex-grow: 0; /* Don't grow horizontally */
+                width: auto; /* Allow content to dictate width */
+                min-width: 120px; /* Ensure some space for controls */
+                padding: 0;
+            }
+            #reset-button {
+                margin-top: 0; /* Reset default button margin */
+                margin-bottom: 20px; /* Space below button */
+                margin-left: auto; /* Push button to the right */
+            }
+            #status {
+                margin-right: 0; /* Remove right margin when stacked */
+                margin-bottom: 10px; /* Space below status when stacked */
+                text-align: right; /* Align status text to the right */
+                max-width: 100%; /* Ensure status text wraps */
+            }
+        }
+
+
+        .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            /* Calculate board size based on remaining viewport space */
+            width: clamp(280px, calc(95vmin - 100px), 600px); /* Adjusted for vertical space */
+            height: clamp(280px, calc(95vmin - 100px), 600px); /* Adjusted for vertical space */
+            max-width: 600px; /* Max size for larger screens */
+            max-height: 600px;
+            border: 4px solid #718096;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0; /* Prevent the board from shrinking if content around it is too big */
+            margin-bottom: 15px; /* Add margin below board */
+        }
+
+        .square {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4vmin; /* Responsive piece size */
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .square.light {
+            background-color: #f7fafc; /* Lighter shade */
+        }
+
+        .square.dark {
+            background-color: #a0aec0; /* Darker shade */
+        }
+
+        .square.selected {
+            background-color: #ecc94b; /* Yellow for selected square */
+        }
+
+        .square.possible-move {
+            background-color: #48bb78; /* Green for possible moves */
+        }
+
+        .square.attack-move {
+            background-color: #e53e3e; /* Red for attack moves */
+        }
+
+        .piece {
+            cursor: grab;
+            font-size: 6vmin; /* Unicode piece size */
+            line-height: 1; /* Adjust line height for better centering */
+        }
+
+        .piece.white {
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+
+        .piece.black {
+            color: #2d3748;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+        }
+
+        .status-bar {
+            font-size: clamp(1rem, 4vmin, 1.5rem);
+            font-weight: bold;
+            text-align: center; /* Center align by default */
+            min-height: 30px;
+            max-width: 90%;
+            word-wrap: break-word;
+            flex-grow: 1;
+            /* margin-right: 10px; This will be managed by flex-wrap or specific media queries */
+        }
+
+        .control-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px;
+            width: 100%;
+            padding: 0 10px;
+            box-sizing: border-box;
+            flex-wrap: wrap; /* Allow items to wrap on very small screens if needed */
+        }
+
+        .button {
+            padding: 10px 20px;
+            font-size: clamp(0.9rem, 3.5vmin, 1.1rem);
+            font-weight: bold;
+            border-radius: 9999px;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-image: linear-gradient(to right, #6b46c1, #805ad5);
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            flex-shrink: 0;
+            margin-left: 10px; /* Space from status bar by default */
+        }
+
+        .button:hover {
+            background-image: linear-gradient(to right, #553c9a, #6b46c1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Adjustments for very small screens if wrapping occurs (portrait fallback) */
+        @media (max-width: 400px) and (orientation: portrait) {
+            .control-panel {
+                flex-direction: column; /* Stack vertically if too narrow in portrait */
+            }
+            .status-bar {
+                margin-right: 0;
+                margin-bottom: 10px; /* Add space between stacked items */
+                text-align: center; /* Center align when stacked */
+            }
+            .button {
+                margin-left: 0; /* Remove left margin when stacked */
+            }
+        }
+
+        /* General adjustments for very short screens (e.g., small phones in landscape) */
+        @media (max-height: 400px) {
+             .chess-board {
+                width: clamp(250px, calc(90vmin - 20px), 550px);
+                height: clamp(250px, calc(90vmin - 20px), 550px);
+                margin-bottom: 5px; /* Reduce margin to save space */
+            }
+            .status-bar, .button {
+                font-size: clamp(0.8rem, 3vmin, 1rem); /* Further reduce font sizes */
+                padding: 8px 16px;
+            }
+            .control-panel {
+                margin-top: 5px; /* Reduce margin */
+            }
+        }
+
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <p class="orientation-message" style="display: none;">Please rotate your device for the best experience!</p>
+
+    <div class="game-container">
+        <div id="chess-board" class="chess-board">
+            </div>
+
+        <div class="control-panel">
+            <div id="status" class="status-bar text-green-400">White to move</div>
+            <button id="reset-button" class="button">Reset Game</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+    <script>
+        // Initialize the Chess.js game instance
+        const game = new Chess();
+        const boardElement = document.getElementById('chess-board');
+        const statusElement = document.getElementById('status');
+        const resetButton = document.getElementById('reset-button');
+
+        let selectedSquare = null;
+        let whiteTurn = true; // Human is always White
+
+        // Unicode chess pieces mapping
+        const pieces = {
+            'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚',
+            'P': '♙', 'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔'
+        };
+
+        // Piece values for evaluation function
+        const pieceValues = {
+            'p': 100, 'n': 320, 'b': 330, 'r': 500, 'q': 900, 'k': 20000 // King value is high to reflect game-ending importance
+        };
+
+        // Piece-Square Tables (PSTs) - adapted for positional evaluation
+        // These tables add or subtract value based on where a piece is on the board.
+        // Good for encouraging pieces to the center, pawns to advance, etc.
+        const Pst = {
+            'p': [
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [50, 50, 50, 50, 50, 50, 50, 50],
+                [10, 10, 20, 30, 30, 20, 10, 10],
+                [5, 5, 10, 25, 25, 10, 5, 5],
+                [0, 0, 0, 20, 20, 0, 0, 0],
+                [5, -5, -10, 0, 0, -10, -5, 5],
+                [5, 10, 10, -20, -20, 10, 10, 5],
+                [0, 0, 0, 0, 0, 0, 0, 0]
+            ],
+            'n': [
+                [-50, -40, -30, -30, -30, -30, -40, -50],
+                [-40, -20, 0, 0, 0, 0, -20, -40],
+                [-30, 0, 10, 15, 15, 10, 0, -30],
+                [-30, 5, 15, 20, 20, 15, 5, -30],
+                [-30, 0, 15, 20, 20, 15, 0, -30],
+                [-30, 5, 10, 15, 15, 10, 5, -30],
+                [-40, -20, 0, 5, 5, 0, -20, -40],
+                [-50, -40, -30, -30, -30, -30, -40, -50]
+            ],
+            'b': [
+                [-20, -10, -10, -10, -10, -10, -10, -20],
+                [-10, 0, 0, 0, 0, 0, 0, -10],
+                [-10, 0, 5, 10, 10, 5, 0, -10],
+                [-10, 5, 5, 10, 10, 5, 5, -10],
+                [-10, 0, 10, 10, 10, 10, 0, -10],
+                [-10, 10, 10, 10, 10, 10, 10, -10],
+                [-10, 5, 0, 0, 0, 0, 5, -10],
+                [-20, -10, -10, -10, -10, -10, -10, -20]
+            ],
+            'r': [
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [5, 10, 10, 10, 10, 10, 10, 5],
+                [-5, 0, 0, 0, 0, 0, 0, -5],
+                [-5, 0, 0, 0, 0, 0, 0, -5],
+                [-5, 0, 0, 0, 0, 0, 0, -5],
+                [-5, 0, 0, 0, 0, 0, 0, -5],
+                [-5, 0, 0, 0, 0, 0, 0, -5],
+                [0, 0, 0, 5, 5, 0, 0, 0]
+            ],
+            'q': [
+                [-20, -10, -10, -5, -5, -10, -10, -20],
+                [-10, 0, 0, 0, 0, 0, 0, -10],
+                [-10, 0, 5, 5, 5, 5, 0, -10],
+                [-5, 0, 5, 5, 5, 5, 0, -5],
+                [0, 0, 5, 5, 5, 5, 0, -5],
+                [-10, 5, 5, 5, 5, 5, 0, -10],
+                [-10, 0, 5, 0, 0, 0, 0, -10],
+                [-20, -10, -10, -5, -5, -10, -10, -20]
+            ],
+            'k': [
+                [-30, -40, -40, -50, -50, -40, -40, -30],
+                [-30, -40, -40, -50, -50, -40, -40, -30],
+                [-30, -40, -40, -50, -50, -40, -40, -30],
+                [-30, -40, -40, -50, -50, -40, -40, -30],
+                [-20, -30, -30, -40, -40, -30, -30, -20],
+                [-10, -20, -20, -20, -20, -20, -20, -10],
+                [20, 20, 0, 0, 0, 0, 20, 20],
+                [20, 30, 10, 0, 0, 10, 30, 20]
+            ]
+        };
+
+        // Function to render the chess board and pieces
+        function renderBoard() {
+            boardElement.innerHTML = ''; // Clear existing board
+            const board = game.board(); // Get the current board state from chess.js
+
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const square = document.createElement('div');
+                    const rank = 8 - i; // Chess ranks (1-8)
+                    const file = String.fromCharCode(97 + j); // Chess files (a-h)
+                    const squareName = file + rank;
+
+                    // Determine square color
+                    const isLight = (i + j) % 2 === 0;
+                    square.classList.add('square', isLight ? 'light' : 'dark');
+                    square.dataset.square = squareName; // Store square name for easy access
+
+                    const piece = board[i][j];
+                    if (piece) {
+                        const pieceElement = document.createElement('span');
+                        pieceElement.classList.add('piece', piece.color === 'w' ? 'white' : 'black');
+                        pieceElement.innerHTML = pieces[piece.type.toLowerCase()]; // Use lowercase type for Unicode
+                        if (piece.type === 'P' || piece.type === 'p') { // Add pawn specific class
+                            pieceElement.classList.add('pawn');
+                        }
+                        square.appendChild(pieceElement);
+                    }
+                    boardElement.appendChild(square);
+                }
+            }
+            updateStatus();
+            addEventListeners();
+        }
+
+        // Function to update game status
+        function updateStatus() {
+            let status = '';
+
+            if (game.in_checkmate()) {
+                status = `Game over, ${game.turn() === 'w' ? 'Black' : 'White'} wins by checkmate!`;
+                statusElement.classList.remove('text-green-400', 'text-blue-400');
+                statusElement.classList.add('text-red-500');
+                disableBoardClicks();
+            } else if (game.in_draw()) {
+                status = 'Game over, draw!';
+                statusElement.classList.remove('text-green-400', 'text-blue-400');
+                statusElement.classList.add('text-yellow-400');
+                disableBoardClicks();
+            } else {
+                status = `${whiteTurn ? 'White' : 'Black'}'s turn`;
+                if (game.in_check()) {
+                    status += (whiteTurn ? ' (check!(White))' : ' (check!(Black))');
+                    statusElement.classList.remove('text-green-400', 'text-blue-400');
+                    statusElement.classList.add('text-red-400'); // Use a slightly less aggressive red for just check
+                } else {
+                    statusElement.classList.remove('text-red-500', 'text-yellow-400', 'text-blue-400', 'text-red-400');
+                    statusElement.classList.add('text-green-400');
+                }
+            }
+            statusElement.innerText = status;
+        }
+
+        // Add click event listeners to squares
+        function addEventListeners() {
+            document.querySelectorAll('.square').forEach(square => {
+                square.removeEventListener('click', handleSquareClick); // Remove old listeners
+                square.addEventListener('click', handleSquareClick); // Add new listeners
+            });
+        }
+
+        function handleSquareClick(event) {
+            const clickedSquare = event.currentTarget;
+            const squareName = clickedSquare.dataset.square;
+
+            if (selectedSquare) {
+                // A piece is already selected, try to move it
+                const fromSquare = selectedSquare.dataset.square;
+                const toSquare = squareName;
+
+                // Handle pawn promotion for white
+                let promotion = 'q'; // Default to queen promotion
+                const pieceOnFrom = game.get(fromSquare);
+                if (pieceOnFrom && pieceOnFrom.type === 'p' && pieceOnFrom.color === 'w' && toSquare[1] === '8') {
+                    // This is where a promotion UI would ideally pop up.
+                    // For simplicity, we'll auto-promote to a queen.
+                    // A modal could be implemented here for user choice.
+                }
+
+                const move = game.move({
+                    from: fromSquare,
+                    to: toSquare,
+                    promotion: promotion
+                });
+
+                if (move) {
+                    // Valid move
+                    whiteTurn = false; // It's now AI's turn
+                    renderBoard(); // Update board visually
+
+                    // Clear highlights
+                    clearHighlights();
+
+                    // Make AI move after a short delay
+                    setTimeout(makeAIMove, 500);
+                } else {
+                    // Invalid move, deselect the piece and clear highlights
+                    selectedSquare = null;
+                    clearHighlights();
+                    // If the clicked square has a piece of the current player's color, select it
+                    const pieceOnTo = game.get(toSquare);
+                    if (pieceOnTo && pieceOnTo.color === 'w' && whiteTurn) {
+                        selectedSquare = clickedSquare;
+                        highlightPossibleMoves(squareName);
+                    }
+                }
+            } else {
+                // No piece is selected, try to select one
+                const piece = game.get(squareName);
+                // Only allow selecting white pieces on white's turn
+                if (piece && piece.color === 'w' && whiteTurn) {
+                    selectedSquare = clickedSquare;
+                    highlightPossibleMoves(squareName);
+                }
+            }
+        }
+
+        function highlightPossibleMoves(squareName) {
+            clearHighlights(); // Clear any existing highlights
+
+            const moves = game.moves({
+                square: squareName,
+                verbose: true // Get detailed move info
+            });
+
+            // Highlight the selected square
+            document.querySelector(`[data-square="${squareName}"]`).classList.add('selected');
+
+            // Highlight possible destination squares
+            moves.forEach(move => {
+                const targetSquare = document.querySelector(`[data-square="${move.to}"]`);
+                if (targetSquare) {
+                    if (move.flags.includes('c') || move.flags.includes('e')) { // 'c' for capture, 'e' for en passant
+                        targetSquare.classList.add('attack-move');
+                    } else {
+                        targetSquare.classList.add('possible-move');
+                    }
+                }
+            });
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.square').forEach(square => {
+                square.classList.remove('selected', 'possible-move', 'attack-move');
+            });
+        }
+
+        function disableBoardClicks() {
+            document.querySelectorAll('.square').forEach(square => {
+                square.removeEventListener('click', handleSquareClick);
+            });
+        }
+
+        // --- AI Logic (Minimax with Alpha-Beta Pruning) ---
+
+        // Evaluation function for a given board state
+        function evaluateBoard(boardState) {
+            let score = 0;
+            // Iterate over all squares on the board
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    const piece = boardState[i][j];
+                    if (piece) {
+                        const pieceVal = pieceValues[piece.type.toLowerCase()];
+                        let pstVal = 0;
+                        // Apply piece-square table values
+                        if (Pst[piece.type.toLowerCase()]) {
+                            // For black pieces, flip the PST vertically
+                            pstVal = (piece.color === 'w') ? Pst[piece.type.toLowerCase()][i][j] : Pst[piece.type.toLowerCase()][7 - i][j];
+                        }
+
+                        if (piece.color === 'w') {
+                            score += (pieceVal + pstVal);
+                        } else {
+                            score -= (pieceVal + pstVal);
+                        }
+                    }
+                }
+            }
+
+            // Add bonus for castling rights (simple heuristic)
+            // This needs to be applied carefully to the evaluation for minimax.
+            // For now, it's a very basic heuristic.
+            // A more robust AI would consider castling safety and king position more deeply.
+            // Removed for now, as it can sometimes lead to odd behavior without proper context in minimax.
+
+            // Check for checkmate and stalemate for immediate high/low scores
+            if (game.in_checkmate()) {
+                if (game.turn() === 'b') { // If white is checkmated, score is very low (good for black)
+                    return -100000;
+                } else { // If black is checkmated, score is very high (good for white)
+                    return 100000;
+                }
+            }
+            if (game.in_draw()) {
+                return 0; // Draw is 0
+            }
+
+            return score;
+        }
+
+        // Minimax with Alpha-Beta Pruning
+        // This function searches the game tree to find the best move.
+        // It recursively evaluates positions, assuming both players play optimally.
+        function minimax(depth, gameInstance, alpha, beta, isMaximizingPlayer) {
+            // Base case: if depth is 0 or game is over, return the board evaluation
+            if (depth === 0 || gameInstance.game_over()) {
+                return evaluateBoard(gameInstance.board());
+            }
+
+            const possibleMoves = gameInstance.moves({ verbose: true });
+
+            // Ensure consistent sorting for moves to improve alpha-beta pruning effectiveness
+            // (e.g., captures first, then other moves) - simple sort for now
+            possibleMoves.sort((a, b) => {
+                const aIsCapture = a.flags.includes('c') || a.flags.includes('e');
+                const bIsCapture = b.flags.includes('c') || b.flags.includes('e');
+                if (aIsCapture && !bIsCapture) return -1;
+                if (!aIsCapture && bIsCapture) return 1;
+                return 0;
+            });
+
+
+            if (isMaximizingPlayer) { // This means it's White's turn (human)
+                let maxEval = -Infinity;
+                for (let i = 0; i < possibleMoves.length; i++) {
+                    const move = possibleMoves[i];
+                    gameInstance.move(move); // Make the move
+                    const evaluation = minimax(depth - 1, gameInstance, alpha, beta, false); // Recurse for minimizing player
+                    gameInstance.undo(); // Undo the move (backtrack)
+                    maxEval = Math.max(maxEval, evaluation);
+                    alpha = Math.max(alpha, evaluation);
+                    if (beta <= alpha) {
+                        break; // Alpha-beta cutoff
+                    }
+                }
+                return maxEval;
+            } else { // This means it's Black's turn (AI)
+                let minEval = Infinity;
+                for (let i = 0; i < possibleMoves.length; i++) {
+                    const move = possibleMoves[i];
+                    gameInstance.move(move); // Make the move
+                    const evaluation = minimax(depth - 1, gameInstance, alpha, beta, true); // Recurse for maximizing player
+                    gameInstance.undo(); // Undo the move (backtrack)
+                    minEval = Math.min(minEval, evaluation);
+                    beta = Math.min(beta, evaluation);
+                    if (beta <= alpha) {
+                        break; // Alpha-beta cutoff
+                    }
+                }
+                return minEval;
+            }
+        }
+
+
+        // Function for AI to make a move
+        async function makeAIMove() {
+            // Display thinking status
+            statusElement.innerText = "AI is thinking...";
+            statusElement.classList.remove('text-green-400');
+            statusElement.classList.add('text-blue-400');
+
+            // Add a small delay to show thinking status
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            const possibleMoves = game.moves({ verbose: true });
+
+            if (possibleMoves.length === 0) {
+                // Game is over (checkmate or stalemate), status will be updated by renderBoard
+                return;
+            }
+
+            let bestMove = null;
+            let bestValue = Infinity; // AI (Black) wants to minimize White's score
+
+            const searchDepth = 3; // Adjust this value to change AI strength (higher = stronger, slower)
+
+            for (let i = 0; i < possibleMoves.length; i++) {
+                const move = possibleMoves[i];
+                game.move(move); // Make the move on a temporary board
+                // Evaluate the board from AI's perspective (minimizing White's score)
+                const boardValue = minimax(searchDepth - 1, game, -Infinity, Infinity, true); // Next turn is White (maximizing)
+                game.undo(); // Undo the move
+
+                if (boardValue < bestValue) {
+                    bestValue = boardValue;
+                    bestMove = move;
+                }
+            }
+
+            if (bestMove) {
+                game.move(bestMove);
+                whiteTurn = true; // It's now White's turn
+                renderBoard(); // Update board visually
+            }
+        }
+
+        // Reset game function
+        function resetGame() {
+            game.reset();
+            selectedSquare = null;
+            whiteTurn = true;
+            renderBoard();
+            statusElement.classList.remove('text-red-500', 'text-yellow-400', 'text-blue-400', 'text-red-400'); // Clear all potential status colors
+            statusElement.classList.add('text-green-400');
+        }
+
+        // Event listener for the reset button
+        resetButton.addEventListener('click', resetGame);
+
+        // Initial board render when the page loads
+        document.addEventListener('DOMContentLoaded', renderBoard);
+
+        // JavaScript to check and prompt for orientation
+        function checkOrientation() {
+            const orientationMessage = document.querySelector('.orientation-message');
+            // Show message if portrait and on a "mobile" screen (e.g., width <= 768px)
+            if (window.matchMedia("(orientation: portrait)").matches && window.innerWidth <= 768) {
+                orientationMessage.style.display = 'block';
+            } else {
+                orientationMessage.style.display = 'none';
+            }
+        }
+
+        // Initial check and add listener for orientation changes
+        window.addEventListener('load', checkOrientation);
+        window.addEventListener('orientationchange', checkOrientation);
+        window.addEventListener('resize', checkOrientation); // Also check on resize for desktop testing
+    </script>
+</body>
+</html>
