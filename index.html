@@ -7,238 +7,286 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #000000; /* Solid black background */
-            color: #ffffff; /* White text for overall page */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 10px;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #000000;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
 
-        /* Landscape orientation for mobile devices */
-        @media (orientation: portrait) and (max-width: 768px) {
-            body {
-                /* Prompt user to rotate device, or subtly encourage landscape */
-                flex-direction: column; /* Default for portrait */
-            }
-            .orientation-message {
-                display: block; /* Show message in portrait */
-                text-align: center;
-                margin-top: 20px;
-                color: #e53e3e;
-                font-weight: bold;
-            }
-             .chess-board, .control-panel {
-                transform: scale(0.8); /* Slightly shrink if portrait and narrow to try and fit */
-                margin: 0 auto; /* Center scaled content */
-            }
-        }
+/* Portrait orientation for mobile devices */
+@media (orientation: portrait) and (max-width: 768px) {
+    body {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        padding: 0;
+        margin: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
 
-        @media (orientation: landscape) and (max-width: 768px) {
-            body {
-                /* In landscape, we might want to put things side-by-side or optimize space differently */
-                justify-content: space-around; /* Distribute space vertically */
-                flex-direction: row; /* Arrange main content side-by-side */
-                align-items: center;
-                padding: 10px; /* Reduced padding for more space */
-            }
-            .orientation-message {
-                display: none; /* Hide message in landscape */
-            }
-            .game-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                flex-grow: 1; /* Allow it to take available horizontal space */
-                max-width: 70%; /* Limit the container width in landscape to leave space for controls */
-            }
-            .chess-board {
-                width: clamp(250px, calc(90vmin - 20px), 550px); /* Slightly adjust clamp for landscape */
-                height: clamp(250px, calc(90vmin - 20px), 550px);
-                margin-bottom: 10px; /* Adjust margin for landscape layout */
-            }
-            .control-panel {
-                flex-direction: column; /* Stack controls vertically on the side */
-                justify-content: flex-start; /* Align controls to the top of their column */
-                align-items: flex-end; /* Align items to the right within their column */
-                margin-top: 0;
-                margin-left: 20px; /* Space between board container and controls */
-                flex-grow: 0; /* Don't grow horizontally */
-                width: auto; /* Allow content to dictate width */
-                min-width: 120px; /* Ensure some space for controls */
-                padding: 0;
-            }
-            #reset-button {
-                margin-top: 0; /* Reset default button margin */
-                margin-bottom: 20px; /* Space below button */
-                margin-left: auto; /* Push button to the right */
-            }
-            #status {
-                margin-right: 0; /* Remove right margin when stacked */
-                margin-bottom: 10px; /* Space below status when stacked */
-                text-align: right; /* Align status text to the right */
-                max-width: 100%; /* Ensure status text wraps */
-            }
-        }
+    .orientation-message {
+        display: block;
+        text-align: center;
+        margin-top: 8px;
+        color: #e53e3e;
+        font-weight: bold;
+        font-size: 0.9rem;
+        padding: 0 8px;
+    }
+
+    .game-container {
+        width: 100vw;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .chess-board {
+        transform: none;
+        width: 100vw;
+        height: 100vw;
+        max-width: 100vw;
+        max-height: 100vw;
+        margin: 0;
+        border: none; /* Optional: remove border to avoid overflow */
+        border-radius: 0; /* Optional: flatten corners to fit edge */
+    }
+
+    .control-panel {
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+        margin-top: 10px;
+        padding: 0 5px;
+    }
+
+    .status-bar {
+        font-size: clamp(0.9rem, 4vmin, 1.2rem);
+        text-align: center;
+        margin-bottom: 10px;
+        max-width: 90%;
+    }
+
+    .button {
+        width: 80%;
+        max-width: 300px;
+        margin: 5px 0;
+        font-size: clamp(0.9rem, 4vmin, 1.1rem);
+    }
+}
 
 
-        .chess-board {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            grid-template-rows: repeat(8, 1fr);
-            /* Calculate board size based on remaining viewport space */
-            width: clamp(280px, calc(95vmin - 100px), 600px); /* Adjusted for vertical space */
-            height: clamp(280px, calc(95vmin - 100px), 600px); /* Adjusted for vertical space */
-            max-width: 600px; /* Max size for larger screens */
-            max-height: 600px;
-            border: 4px solid #718096;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
-            overflow: hidden;
-            flex-shrink: 0; /* Prevent the board from shrinking if content around it is too big */
-            margin-bottom: 15px; /* Add margin below board */
-        }
+/* Landscape orientation for mobile devices */
+@media (orientation: landscape) and (max-width: 768px) {
+    body {
+        justify-content: space-around;
+        flex-direction: row;
+        align-items: center;
+        padding: 10px;
+    }
 
-        .square {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 4vmin; /* Responsive piece size */
-            cursor: pointer;
-            user-select: none;
-            transition: background-color 0.2s ease;
-        }
+    .orientation-message {
+        display: none;
+    }
 
-        .square.light {
-            background-color: #f7fafc; /* Lighter shade */
-        }
+    .game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-grow: 1;
+        max-width: 70%;
+    }
 
-        .square.dark {
-            background-color: #a0aec0; /* Darker shade */
-        }
+    .chess-board {
+        width: clamp(250px, calc(90vmin - 20px), 550px);
+        height: clamp(250px, calc(90vmin - 20px), 550px);
+        margin-bottom: 10px;
+    }
 
-        .square.selected {
-            background-color: #ecc94b; /* Yellow for selected square */
-        }
+    .control-panel {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-end;
+        margin-top: 0;
+        margin-left: 20px;
+        flex-grow: 0;
+        width: auto;
+        min-width: 120px;
+        padding: 0;
+    }
 
-        .square.possible-move {
-            background-color: #48bb78; /* Green for possible moves */
-        }
+    #reset-button {
+        margin-top: 0;
+        margin-bottom: 20px;
+        margin-left: auto;
+    }
 
-        .square.attack-move {
-            background-color: #e53e3e; /* Red for attack moves */
-        }
+    #status {
+        margin-right: 0;
+        margin-bottom: 10px;
+        text-align: right;
+        max-width: 100%;
+    }
+}
 
-        .piece {
-            cursor: grab;
-            font-size: 6vmin; /* Unicode piece size */
-            line-height: 1; /* Adjust line height for better centering */
-        }
+.chess-board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: clamp(280px, calc(95vmin - 100px), 600px);
+    height: clamp(280px, calc(95vmin - 100px), 600px);
+    max-width: 600px;
+    max-height: 600px;
+    border: 4px solid #718096;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    margin-bottom: 15px;
+}
 
-        .piece.white {
-            color: #ffffff;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-        }
+.square {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 4vmin;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
 
-        .piece.black {
-            color: #2d3748;
-            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
-        }
+.square.light {
+    background-color: #f7fafc;
+}
 
-        .status-bar {
-            font-size: clamp(1rem, 4vmin, 1.5rem);
-            font-weight: bold;
-            text-align: center; /* Center align by default */
-            min-height: 30px;
-            max-width: 90%;
-            word-wrap: break-word;
-            flex-grow: 1;
-            /* margin-right: 10px; This will be managed by flex-wrap or specific media queries */
-        }
+.square.dark {
+    background-color: #a0aec0;
+}
 
-        .control-panel {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 15px;
-            width: 100%;
-            padding: 0 10px;
-            box-sizing: border-box;
-            flex-wrap: wrap; /* Allow items to wrap on very small screens if needed */
-        }
+.square.selected {
+    background-color: #ecc94b;
+}
 
-        .button {
-            padding: 10px 20px;
-            font-size: clamp(0.9rem, 3.5vmin, 1.1rem);
-            font-weight: bold;
-            border-radius: 9999px;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            background-image: linear-gradient(to right, #6b46c1, #805ad5);
-            color: #ffffff;
-            border: none;
-            cursor: pointer;
-            outline: none;
-            flex-shrink: 0;
-            margin-left: 10px; /* Space from status bar by default */
-        }
+.square.possible-move {
+    background-color: #48bb78;
+}
 
-        .button:hover {
-            background-image: linear-gradient(to right, #553c9a, #6b46c1);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
-        }
+.square.attack-move {
+    background-color: #e53e3e;
+}
 
-        .button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+.piece {
+    cursor: grab;
+    font-size: 6vmin;
+    line-height: 1;
+}
 
-        /* Adjustments for very small screens if wrapping occurs (portrait fallback) */
-        @media (max-width: 400px) and (orientation: portrait) {
-            .control-panel {
-                flex-direction: column; /* Stack vertically if too narrow in portrait */
-            }
-            .status-bar {
-                margin-right: 0;
-                margin-bottom: 10px; /* Add space between stacked items */
-                text-align: center; /* Center align when stacked */
-            }
-            .button {
-                margin-left: 0; /* Remove left margin when stacked */
-            }
-        }
+.piece.white {
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
 
-        /* General adjustments for very short screens (e.g., small phones in landscape) */
-        @media (max-height: 400px) {
-             .chess-board {
-                width: clamp(250px, calc(90vmin - 20px), 550px);
-                height: clamp(250px, calc(90vmin - 20px), 550px);
-                margin-bottom: 5px; /* Reduce margin to save space */
-            }
-            .status-bar, .button {
-                font-size: clamp(0.8rem, 3vmin, 1rem); /* Further reduce font sizes */
-                padding: 8px 16px;
-            }
-            .control-panel {
-                margin-top: 5px; /* Reduce margin */
-            }
-        }
+.piece.black {
+    color: #2d3748;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+.status-bar {
+    font-size: clamp(1rem, 4vmin, 1.5rem);
+    font-weight: bold;
+    text-align: center;
+    min-height: 30px;
+    max-width: 90%;
+    word-wrap: break-word;
+    flex-grow: 1;
+}
+
+.control-panel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 15px;
+    width: 100%;
+    padding: 0 10px;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+}
+
+.button {
+    padding: 10px 20px;
+    font-size: clamp(0.9rem, 3.5vmin, 1.1rem);
+    font-weight: bold;
+    border-radius: 9999px;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-image: linear-gradient(to right, #6b46c1, #805ad5);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    outline: none;
+    flex-shrink: 0;
+    margin-left: 10px;
+}
+
+.button:hover {
+    background-image: linear-gradient(to right, #553c9a, #6b46c1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+}
+
+.button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Adjustments for very small screens if wrapping occurs */
+@media (max-width: 400px) and (orientation: portrait) {
+    .control-panel {
+        flex-direction: column;
+    }
+    .status-bar {
+        margin-right: 0;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    .button {
+        margin-left: 0;
+    }
+}
+
+/* General adjustments for very short screens */
+@media (max-height: 400px) {
+    .chess-board {
+        width: clamp(250px, calc(90vmin - 20px), 550px);
+        height: clamp(250px, calc(90vmin - 20px), 550px);
+        margin-bottom: 5px;
+    }
+    .status-bar, .button {
+        font-size: clamp(0.8rem, 3vmin, 1rem);
+        padding: 8px 16px;
+    }
+    .control-panel {
+        margin-top: 5px;
+    }
+}
 
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex flex-col items-center justify-center min-h-screen p-4">
-
-    <p class="orientation-message" style="display: none;">Please rotate your device for the best experience!</p>
 
     <div class="game-container">
         <div id="chess-board" class="chess-board">
