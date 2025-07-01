@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="style1.css">
+
+<script>
+  window.onload = function () {
+     document.getElementById("loader").style.display = "flex";
+     setTimeout(function() {
+      document.getElementById("loader").style.display = "none";
+    }, 7000);
+};
+  
+</script>
+
+<meta charset="UTF-8">
+<title>Monster Truck Rider</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+
+<meta name="generator" content="Construct 3">
+	<meta name="description" content="Monster Truck Rider">
+	<link rel="manifest" href="appmanifest.json">
+	<link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128.png">
+	<link rel="apple-touch-icon" sizes="256x256" href="icons/icon-256.png">
+	<link rel="icon" type="image/png" href="icons/icon-256.png">
+
+<link rel="stylesheet" href="style.css">
+<script src="jiogames_stb_sdk.js"></script>
+
+</head>
+<body>
+<!-- preloader -->
+  <div class="loader-container" id="loader" style="display:none;">
+      <img src="./icon-256.png" alt="logo">
+      <div class="loader"></div>
+  </div>
+
+<div id="fb-root"></div>
+	<script src="box2d.wasm.js"></script>
+	<noscript>
+		<div id="notSupportedWrap">
+			<h2 id="notSupportedTitle">This content requires JavaScript</h2>
+			<p class="notSupportedMessage">JavaScript appears to be disabled. Please enable it to view this content.</p>
+		</div>
+	</noscript>
+	<script>
+	
+	//initialization of Jiogames SDK
+var jioGames = new Jiogames();
+var isReady = false; 
+var isRewardedReady = false; 
+var adSpot = "8ed85aa3";//MidRoll Ad Spot
+
+var GamePackage = "com.gamegiri.monstertruckriderstb";
+
+
+         window.onAdReady = function (adSpotKey)
+		 { 
+		 adSpotKey == adSpot && (isReady = true, console.log("JioGames: onAdReady MidRoll " + isReady)); adSpotKey == adSpotRewarded && (isRewardedReady = true, console.log("JioGames: onAdReady RewardedVideo " + isRewardedReady)); 
+		 };
+	
+	window.onAdClose = function (adSpotKey)
+	{ 
+	adSpotKey == adSpot && (isReady = false, console.log("JioGames: onAdClose MidRoll " + isReady)); adSpotKey == adSpotRewarded && (isRewardedReady = false, console.log("JioGames: onAdClose RewardedVideo " + isRewardedReady));
+	};
+	
+	window.onAdError = function (adSpotKey, errorMessage)
+	{ adSpotKey == adSpot && (isReady = false, console.log("JioGames: onAdError MidRoll " + isReady+" errorMessage "+errorMessage)); adSpotKey == adSpotRewarded && (isRewardedReady = false, console.log("JioGames: onAdError RewardedVideo " + isRewardedReady+" errorMessage "+errorMessage)); 
+	};
+	
+	window.onAdMediaEnd = function (adSpotKey, success, value) 
+	{
+	adSpotKey == adSpotRewarded && (isRewardedReady = false, console.log("JioGames: onAdMediaEnd RewardedVideo " + isRewardedReady)); 
+	};
+	window.onAdClick = function (adSpotKey) {}; 
+	window.onAdMediaCollapse = function (adSpotKey) {};
+	window.onAdMediaExpand = function (adSpotKey) {};
+	window.onAdMediaStart = function (adSpotKey) {};
+	window.onAdRefresh = function (adSpotKey) {};
+	window.onAdRender = function (adSpotKey) {};
+	window.onAdSkippable = function (adSpotKey) {}; 
+	window.onAdView = function (adSpotKey) {};
+
+	
+	
+	
+	</script>
+	
+	<script src="scripts/supportcheck.js"></script>
+	<script src="scripts/offlineclient.js" type="module"></script>
+	<script src="scripts/main.js" type="module"></script>
+	<script src="scripts/register-sw.js" type="module"></script>
+</body>
+</html>
